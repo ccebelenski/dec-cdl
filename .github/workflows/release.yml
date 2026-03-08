@@ -26,11 +26,7 @@ jobs:
         run: echo "TAG=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
 
       - name: Create source archive
-        run: |
-          tar czf cdl-${{ steps.tag.outputs.TAG }}.tar.gz \
-            --exclude='build' \
-            --exclude='.git' \
-            -C .. "$(basename $GITHUB_WORKSPACE)"
+        run: git archive --format=tar.gz --prefix=cdl-${{ steps.tag.outputs.TAG }}/ -o cdl-${{ steps.tag.outputs.TAG }}.tar.gz HEAD
 
       - name: Create binary package with CPack
         run: cd build && cpack -G TGZ
