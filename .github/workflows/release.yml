@@ -1,0 +1,43 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: cmake --build build
+
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
+
+      - name: Get tag name
+        id: tag
+        run: echo "TAG=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
+
+      - name: Create source archive
+        run: |
+          tar czf cdl-${{ steps.tag.outputs.TAG }}.tar.gz \
+            --exclude='build' \
+            --exclude='.git' \
+            -C .. "$(basename $GITHUB_WORKSPACE)"
+
+      - name: Create binary package with CPack
+        run: cd build && cpack -G TGZ
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            cdl-${{ steps.tag.outputs.TAG }}.tar.gz
+            build/*.tar.gz
